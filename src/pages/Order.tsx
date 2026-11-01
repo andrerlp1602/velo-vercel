@@ -26,6 +26,8 @@ import {
   OPTIONAL_PRICES,
 } from '@/store/configuratorStore';
 import { createOrder } from '@/hooks/useOrders';
+import { isValidCpf, onlyDigits } from '@/lib/cpf';
+import { decideCreditStatus } from '@/lib/creditDecision';
 import { supabase } from '@/integrations/supabase/client';
 
 import logo from '@/assets/brand.svg';
@@ -57,27 +59,6 @@ const stores = [
   'Velô Morumbi - Av. Morumbi, 1500',
   'Velô Ibirapuera - Av. Ibirapuera, 3000',
 ];
-
-const onlyDigits = (value: string): string => value.replace(/\D/g, '');
-
-const isValidCpf = (value: string): boolean => {
-  const cpf = onlyDigits(value);
-  if (cpf.length !== 11) return false;
-  if (/^(\d)\1{10}$/.test(cpf)) return false;
-
-  const calcDigit = (base: string, factor: number): number => {
-    let total = 0;
-    for (let i = 0; i < base.length; i++) {
-      total += Number(base[i]) * (factor - i);
-    }
-    const mod = total % 11;
-    return mod < 2 ? 0 : 11 - mod;
-  };
-
-  const d1 = calcDigit(cpf.slice(0, 9), 10);
-  const d2 = calcDigit(cpf.slice(0, 10), 11);
-  return cpf.endsWith(`${d1}${d2}`);
-};
 
 const isValidEmailStrict = (value: string): boolean => {
   const email = value.trim();
@@ -182,26 +163,8 @@ const Order = () => {
           return;
         }
 
-        const score = data.score;
-        const entryPercentage = entryValue / totalPrice;
-
-        // Regras de Decisão (Ordem de Avaliação)
-        // 1️⃣ Regra da Entrada Alta: SE (Entrada >= 50% do Total) E (Score < 700) → APROVADO
-        if (entryPercentage >= 0.5 && score < 700) {
-          orderStatus = 'APROVADO';
-        }
-        // 2️⃣ Score Alto: SE Score > 700 → APROVADO
-        else if (score > 700) {
-          orderStatus = 'APROVADO';
-        }
-        // 3️⃣ Score Médio: SE Score entre 501 e 700 → EM_ANALISE
-        else if (score >= 501 && score <= 700) {
-          orderStatus = 'EM_ANALISE';
-        }
-        // 4️⃣ Score Baixo: SE Score <= 500 → REPROVADO
-        else {
-          orderStatus = 'REPROVADO';
-        }
+        // Regras de decisão de crédito (ver src/lib/creditDecision.ts)
+        orderStatus = decideCreditStatus(data.score, entryValue, totalPrice);
 
       } catch (err) {
         console.error('Credit analysis network error:', err);
