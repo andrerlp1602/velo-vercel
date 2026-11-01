@@ -12,7 +12,7 @@ on:
 
 # Variáveis globais disponíveis para todos os jobs
 env:
-  NODE_VERSION: '24'
+  NODE_VERSION: "24"
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
   VERCEL_SCOPE: andre-8f84
 
@@ -59,7 +59,7 @@ build-and-deploy:
     - name: Enable Corepack
       run: corepack enable
     - name: Install dependencies
-        run: yarn install
+      run: yarn install
     - name: Build Vercel
       run: yarn vercel build --token=$VERCEL_TOKEN
     - name: Deploy Preview Vercel
