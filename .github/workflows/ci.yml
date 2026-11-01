@@ -13,6 +13,8 @@ on:
 # Variáveis globais disponíveis para todos os jobs
 env:
   NODE_VERSION: '24'
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+  VERCEL_SCOPE: andre-8f84
 
 jobs:
   # Job de testes unitários
@@ -42,3 +44,23 @@ jobs:
       # Executa os testes unitários (vitest run)
       - name: Run unit tests
         run: yarn test
+
+build-and-deploy:
+  name: Build & Deploy Vercel Preview
+  needs: [unit-tests]
+  runs-on: ubuntu-latest
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v6.1.0
+    - name: Setup Node
+      uses: actions/setup-node@v7.1.0
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    - name: Enable Corepack
+      run: corepack enable
+    - name: Install dependencies
+        run: yarn install
+    - name: Build Vercel
+      run: yarn vercel build --token=$VERCEL_TOKEN
+    - name: Deploy Preview Vercel
+      run: yarn vercel deploy --prebuilt --target=preview --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE
