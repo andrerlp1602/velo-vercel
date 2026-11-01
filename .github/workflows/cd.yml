@@ -2,7 +2,7 @@
 # Propósito: executar os testes unitários (Vitest) a cada push na branch main.
 # A estrutura está preparada para expansão futura (novos jobs, triggers e variáveis).
 
-name: Continuous Integration
+name: Continuous Deployment
 
 # Gatilhos do workflow
 on:
@@ -116,3 +116,15 @@ jobs:
           path: playwright-report/
           if-no-files-found: error
           retention-days: 1
+
+  promote:
+    name: Promote to Production
+    needs: [e2e-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vercel promote
+        run:
+          yarn vercel promote ${{ needs.e2e-tests.outputs.deployment-url }}  \
+          --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE \
+          --environment=production \
+          --yes
