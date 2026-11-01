@@ -52,6 +52,8 @@ jobs:
     name: Build & Deploy Vercel Preview
     needs: [unit-tests]
     runs-on: ubuntu-latest
+    outputs:
+      deployment-url: ${{ steps.deploy.outputs.deployment-url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6.1.0
@@ -74,4 +76,42 @@ jobs:
         run: yarn vercel build --token=$VERCEL_TOKEN
 
       - name: Deploy Preview Vercel
-        run: yarn vercel deploy --prebuilt --target=preview --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE
+        id: deploy
+        run: |
+          URL=$(yarn vercel deploy --prebuilt --target=preview --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE)
+          echo "deployment-url=$URL" >> $GITHUB_OUTPUT
+
+  e2e-tests:
+    name: E2E Tests
+    needs: [build-and-deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.1.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Install Playwright Browser
+        run: yarn playwright install --with-deps chromium
+
+      - name: Run E2E Regression Tests
+        run: yarn playwright test playwright/e2e/online.spec.ts
+        env:
+          BASE_URL: ${{ needs.build-and-deploy.outputs.deployment-url }}
+
+        name: Upload Playwright Report
+        if: $ {{ !canceled()}}
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: playwright-report
+          path: playwright/test-results
+          retention-days: 1
