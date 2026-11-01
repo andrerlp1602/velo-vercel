@@ -108,7 +108,7 @@ jobs:
         env:
           BASE_URL: ${{ needs.build-and-deploy.outputs.deployment-url }}
 
-        name: Upload Playwright Report
+      - name: Upload Playwright Report
         if: $ {{ !canceled()}}
         uses: actions/upload-artifact@v7.0.2
         with:
