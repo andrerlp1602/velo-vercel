@@ -1,0 +1,44 @@
+# Pipeline de Integração Contínua (CI).
+# Propósito: executar os testes unitários (Vitest) a cada push na branch main.
+# A estrutura está preparada para expansão futura (novos jobs, triggers e variáveis).
+
+name: Continuous Integration
+
+# Gatilhos do workflow
+on:
+  push:
+    branches:
+      - main
+
+# Variáveis globais disponíveis para todos os jobs
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  # Job de testes unitários
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # Baixa o código do repositório
+      - name: Checkout
+        uses: actions/checkout@v6.1.0
+
+      # Configura o Node.js na versão definida em NODE_VERSION
+      - name: Setup Node
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # Habilita o Corepack para gerenciar o Yarn
+      - name: Enable Corepack
+        run: corepack enable
+
+      # Instala as dependências do projeto
+      - name: Install dependencies
+        run: yarn install
+
+      # Executa os testes unitários (vitest run)
+      - name: Run unit tests
+        run: yarn test
