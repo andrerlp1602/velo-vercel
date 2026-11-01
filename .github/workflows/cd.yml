@@ -107,6 +107,7 @@ jobs:
         run: yarn playwright test
         env:
           BASE_URL: ${{ needs.build-and-deploy.outputs.deployment-url }}
+          TESTDINO_TOKEN: ${{ secrets.TESTDINO }}
 
       - name: Upload Playwright Report
         if: ${{ !cancelled() }}
