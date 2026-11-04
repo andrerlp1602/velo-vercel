@@ -108,6 +108,7 @@ jobs:
         env:
           BASE_URL: ${{ needs.build-and-deploy.outputs.deployment-url }}
           TESTDINO_TOKEN: ${{ secrets.TESTDINO }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Upload Playwright Report
         if: ${{ !cancelled() }}
