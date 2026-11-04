@@ -119,16 +119,30 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  deploy-production:
-    name: Deploy Production
-    needs: [e2e-tests]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Pull Vercel Production Config
-        run: yarn vercel pull --yes --environment=production --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE
+deploy-production:
+  name: Deploy Production
+  needs: [e2e-tests]
+  runs-on: ubuntu-latest
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v6.1.0
 
-      - name: Build Vercel Production
-        run: yarn vercel build --prod --token=$VERCEL_TOKEN
+    - name: Setup Node
+      uses: actions/setup-node@v7.1.0
+      with:
+        node-version: ${{ env.NODE_VERSION }}
 
-      - name: Deploy Production Vercel
-        run: yarn vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE
+    - name: Enable Corepack
+      run: corepack enable
+
+    - name: Install dependencies
+      run: yarn install
+
+    - name: Pull Vercel Production Config
+      run: yarn vercel pull --yes --environment=production --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE
+
+    - name: Build Vercel Production
+      run: yarn vercel build --prod --token=$VERCEL_TOKEN
+
+    - name: Deploy Production Vercel
+      run: yarn vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE
